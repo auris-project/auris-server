@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, request
+from subprocess import Popen
 import os
 import socket
 
@@ -14,10 +15,14 @@ ponto_de_parada = "*"
 start2 = "start"
 stop2 = "stop"
 
-path = "/home/luzenildo/MUSIC_DEAF/music_for_deaf_files/auris_melodies/musica.txt"
+path1 = os.path.expanduser('~')
 
-@app.route("/api/arduino-post", methods=['GET'])
-def post_arduino():
+@app.route("/api/arduino-post/<music>", methods=['GET'])
+def post_arduino(music):
+	print music
+	#path = path + music + ".txt"
+	path = "%s/MUSIC_DEAF/music_for_deaf_files/auris_melodies/%s.txt" %(path1,music)
+	print path
 	work_file = open(path, "rb")
 	file_size = str(os.stat(path).st_size)
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,6 +45,22 @@ def post_arduino():
 	s.close
 	#print "received data:", data
 	return "Post Sent!", 200 
+
+@app.route("/api/generate-midi/<music>", methods=['GET'])
+def generate_midi(music):
+	global process, running
+	path = "/.%s/MUSIC_DEAF/music_for_deaf/auris-controller/auris_controller.out" %(path1) 
+	print path	
+	process = Popen([path, "midiMelody", music])
+	return "Midi Generated!", 200
+
+@app.route("/api/generate-auris/<music>", methods=['GET'])
+def generate_auris(music):
+	global process, running
+	path = "/.%s/MUSIC_DEAF/music_for_deaf/auris-controller/auris_controller.out" %(path1) 
+	print path	
+	process = Popen([path, "aurisStream", music])
+	return "Auris File Generated!", 200
 
 @app.route("/api/start", methods=['GET'])
 def start():
