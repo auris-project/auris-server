@@ -75,7 +75,7 @@ def post_arduino(music):
 	file_size = int(file_size) #Parse file_size from Str to Int.
 	buffer = work_file.read(file_size) #Read file and put in buffer.
 	s.send(message1) #Send flag to Arduino write what will be sent through socket.
-	data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
+	data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
 	s.send(buffer) #Send file to Arduino.
 	s.send(ponto_de_parada) #Send end of file mark to Arduino.
 	print "Done Sending Files to Arduino."
@@ -83,7 +83,10 @@ def post_arduino(music):
 	data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
 	#At this pont Arduino MUST send an response to server to notify that transference was completed.
 	#If none message was received, the server will stop waiting for response.
-	print "Message Received from Arduino: ", data
+	while (data != "recebi"):
+		data = s.recv(buffersize)
+
+	print "Message Received from Arduino: ", data #Print message received from Arduino
 	s.close #Close Socket
 	return "Post Sent!", 200 #This message should be displayed in your Web Browser.
 
