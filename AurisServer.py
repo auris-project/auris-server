@@ -64,6 +64,7 @@ def generate_auris(music):
 def post_arduino(music):
 	path = "%s/MUSIC_DEAF/music_for_deaf_files/auris_melodies/%s.txt" %(path1,music) #Concatenate filepath with song name received through URL Parameter.
 	work_file = open(path, "rb") #Open Auris File located in "path" string variable.
+	file_size = str(os.stat(path).st_size) #Get File size.
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Create Socket.
 	s.connect((ip, port)) #Connect in Arduino server.
@@ -71,7 +72,7 @@ def post_arduino(music):
 	
 	#Start Sending Files:
 	print "Starting Sending Files to Arduino..."
-	file_size = int(file_size) #Get File size.
+	file_size = int(file_size) #Parse file_size from Str to Int.
 	buffer = work_file.read(file_size) #Read file and put in buffer.
 	s.send(message1) #Send flag to Arduino write what will be sent through socket.
 	data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
