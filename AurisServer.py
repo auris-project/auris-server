@@ -26,7 +26,7 @@ path1 = os.path.expanduser('~') #Get /HOME/USER filepath.
 
 '''
 # Route to Generate Midi Melodies using the Auris Controller Midi-Melody Generator Module.
-# The song name must be sent though URL in your Web Browser.
+# The song name must be sent through URL in your Web Browser.
 # Example: http://Your_IP:Port/api/generate-midi/SONG_NAME.
 # PS1: The song MUST be located in ~/MUSIC_DEAF/music_for_deaf_files/audios.
 '''
@@ -40,7 +40,7 @@ def generate_midi(music):
 
 '''
 # Route to Generate Auris Melodies Files using the Auris Controller Midi-Melody Generator Module.
-# The song name must be sent though URL in your Web Browser.
+# The song name must be sent through URL in your Web Browser.
 # Example: http://Your_IP:Port/api/generate-auris/SONG_NAME.
 # PS1: You MUST generate Midi Melody first to use this route. 
 # PS2: If you dont create Midi Melody File for your song, you will be not able to generate Auris Files.
@@ -55,7 +55,7 @@ def generate_auris(music):
 
 '''
 # Route to send Auris Melodies files to Arduino.
-# The song name must be sent though URL in your Web Browser.
+# The song name must be sent through URL in your Web Browser.
 # Example: http://Your_IP:Port/api/arduino-post/SONG_NAME.
 # PS1: Before send Auris Melody File to Arduino, you MUST fist GENERATE Midi-Melody Files using /api/generate-midi/MUSIC_NAME ...
 # and GENERATE Auris-Melody Files using /api/generate-auris/MUSIC_NAME
@@ -93,15 +93,22 @@ def post_arduino(music):
 '''
 # Route to send Start flag message to Arduino.
 # To send this message, you first MUST first send Auris Melody file to Arduino using arduino-post/MUSIC_NAME route.
+# You MUST send the song name through URL in yout web browser
+# Example: http://Your_IP:Port/api/start/SONG_NAME.
+# If you have installed all dependencies using our script installer, the song will be played in your computer using PUREDATA.
 '''
-@app.route("/api/start", methods=['GET'])
-def start():
+@app.route("/api/start/<music>", methods=['GET'])
+def start(music):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Create Socket to send message.
 	s.connect((ip, port)) #Connect in Arduino Socket Server.
 	print "Sending Start to Arduino"
 	s.send(message2) #Send Start Message Flag to Arduino.
 	print "Start Sent"
 	s.close #Close Socket.
+	path = "/.%s/MUSIC_DEAF/music_for_deaf/auris-core/auris-filter/src/main" %(path1) #Auris-Filter to play audio path.	
+	music_path = "%s/MUSIC_DEAF/music_for_deaf_files/audios/%s.wav" %(path1, music) #Song file path
+	#Create Process to play music.
+	process = Popen([path, "1", music_path]) #System call sending "1" and music name as arguments.
 	return "Started!", 200 #In case of success, this message should be displayed in your Web Browser.
 
 '''
