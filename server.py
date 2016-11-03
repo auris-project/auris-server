@@ -13,10 +13,10 @@ running = False
 def start(music):
 	global process, running
 	if running is False:	
-		process = Popen(["sudo", "/./home/ubuntu/MUSIC_DEAF/music_for_deaf/auris-controller/auris_controller.out", music], shell=False)
+		process = Popen(["sudo", "/./home/ubuntu/MUSIC_DEAF/music_for_deaf/auris-controller/auris_controller.out", "midiMelody", music], shell=False)
 		running = True
 		return "Start: " + music, 200
-	return "Melody are running", 405 
+	return "Melody are running", 405
 
 @app.route("/api/stop", methods=['GET'])
 def stop():
