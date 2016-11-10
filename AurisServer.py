@@ -22,8 +22,8 @@ message3 = "stop"  #Arduino Message 3: This message throws a flag to Arduino sto
 ponto_de_parada = "*" #End of file. This message notify the end of file to Arduino stop write file into SD Card.
 
 #Path file Configurations
-path1 = os.environ('AURIS_HOME_PATH') #Get Auris Home filepath.
-path2 = os.environ('AURIS_FILES') #Get Auris Files filepath
+path1 = os.environ.get('AURIS_HOME_PATH') #Get Auris Home filepath.
+path2 = os.environ.get('AURIS_FILES') #Get Auris Files filepath
 
 
 '''
@@ -35,7 +35,7 @@ path2 = os.environ('AURIS_FILES') #Get Auris Files filepath
 @app.route("/api/generate-midi/<music>", methods=['GET'])
 def generate_midi(music):
 	global process #Process global variable.
-	path = "/.%sauris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.
+	path = "/.%s/auris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.
 	#Create Process to execute Midi-Melody Generator Module.
 	process = Popen([path, "midiMelody", music]) #System call passing "midiMelody" and music name parameters.
 	return "Midi Generated!", 200 #In case of success, this message should be displayed in your Web Browser.
@@ -50,7 +50,7 @@ def generate_midi(music):
 @app.route("/api/generate-auris/<music>", methods=['GET'])
 def generate_auris(music):
 	global process #Process global variable.
-	path = "/.%sauris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.	
+	path = "/.%s/auris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.	
 	#Create Process to execute Midi-Melody Generator Module.
 	process = Popen([path, "aurisStream", music]) #System call passing "aurisStream" and music name parameters.
 	return "Auris File Generated!", 200 #In case of success, this message should be displayed in your Web Browser.
@@ -64,7 +64,7 @@ def generate_auris(music):
 '''
 @app.route("/api/arduino-post/<music>", methods=['GET'])
 def post_arduino(music):
-	path = "%sauris_melodies/%s.txt" %(path2,music) #Concatenate filepath with song name received through URL Parameter.
+	path = "%s/auris_melodies/%s.txt" %(path2,music) #Concatenate filepath with song name received through URL Parameter.
 	work_file = open(path, "rb") #Open Auris File located in "path" string variable.
 	file_size = str(os.stat(path).st_size) #Get File size.
 
@@ -107,8 +107,8 @@ def start(music):
 	s.send(message2) #Send Start Message Flag to Arduino.
 	print "Start Sent"
 	s.close #Close Socket.
-	path = "/.%sauris-core/auris-filter/src/main" %(path1) #Auris-Filter to play audio path.	
-	music_path = "%saudios/%s.wav" %(path2, music) #Song file path
+	path = "/.%s/auris-core/auris-filter/src/main" %(path1) #Auris-Filter to play audio path.	
+	music_path = "%s/audios/%s.wav" %(path2, music) #Song file path
 	#Create Process to play music.
 	process = Popen([path, "1", music_path]) #System call sending "1" and music name as arguments.
 	return "Started!", 200 #In case of success, this message should be displayed in your Web Browser.
