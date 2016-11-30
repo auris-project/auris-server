@@ -7,8 +7,14 @@ from subprocess import Popen
 import os
 import socket
 
+#Path file Configurations
+path1 = os.environ.get('AURIS_HOME_PATH') #Get Auris Home filepath.
+path2 = os.environ.get('AURIS_FILES') #Get Auris Files filepath
+
 #Flask HTML Configurations:
 app = Flask(__name__, static_url_path='', static_folder='html')
+app.config['UPLOAD_FOLDER'] = "%s/audios" %(path2) #path to save uploaded songs.
+app.config['ALLOWED_EXTENSIONS'] = set(['wav']) #Extensions supported by Auris Midi Melody Generator.
 
 #Server Socket Configurations:
 ip = '192.168.0.105' #IP to connect Arduino through Socket.
@@ -21,9 +27,6 @@ message2 = "start" #Arduino Message 2: This message throws a flag to Arduino pla
 message3 = "stop"  #Arduino Message 3: This message throws a flag to Arduino stop execution of Auris files.
 ponto_de_parada = "*" #End of file. This message notify the end of file to Arduino stop write file into SD Card.
 
-#Path file Configurations
-path1 = os.path.expanduser('~') #Get /HOME/USER filepath.
-
 '''
 # Route to Generate Midi Melodies using the Auris Controller Midi-Melody Generator Module.
 # The song name must be sent through URL in your Web Browser.
@@ -33,7 +36,7 @@ path1 = os.path.expanduser('~') #Get /HOME/USER filepath.
 @app.route("/api/generate-midi/<music>", methods=['GET'])
 def generate_midi(music):
 	global process #Process global variable.
-	path = "/.%s/MUSIC_DEAF/music_for_deaf/auris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.
+	path = "/.%s/auris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.
 	#Create Process to execute Midi-Melody Generator Module.
 	process = Popen([path, "midiMelody", music]) #System call passing "midiMelody" and music name parameters.
 	return "Midi Generated!", 200 #In case of success, this message should be displayed in your Web Browser.
@@ -48,7 +51,7 @@ def generate_midi(music):
 @app.route("/api/generate-auris/<music>", methods=['GET'])
 def generate_auris(music):
 	global process #Process global variable.
-	path = "/.%s/MUSIC_DEAF/music_for_deaf/auris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.	
+	path = "/.%s/auris-controller/auris_controller.out" %(path1) #Auris Controller Midi-Melody Generator Module path.	
 	#Create Process to execute Midi-Melody Generator Module.
 	process = Popen([path, "aurisStream", music]) #System call passing "aurisStream" and music name parameters.
 	return "Auris File Generated!", 200 #In case of success, this message should be displayed in your Web Browser.
@@ -62,7 +65,7 @@ def generate_auris(music):
 '''
 @app.route("/api/arduino-post/<music>", methods=['GET'])
 def post_arduino(music):
-	path = "%s/MUSIC_DEAF/music_for_deaf_files/auris_melodies/%s.txt" %(path1,music) #Concatenate filepath with song name received through URL Parameter.
+	path = "%s/auris_melodies/%s.txt" %(path2,music) #Concatenate filepath with song name received through URL Parameter.
 	work_file = open(path, "rb") #Open Auris File located in "path" string variable.
 	file_size = str(os.stat(path).st_size) #Get File size.
 
@@ -105,8 +108,8 @@ def start(music):
 	s.send(message2) #Send Start Message Flag to Arduino.
 	print "Start Sent"
 	s.close #Close Socket.
-	path = "/.%s/MUSIC_DEAF/music_for_deaf/auris-core/auris-filter/src/main" %(path1) #Auris-Filter to play audio path.	
-	music_path = "%s/MUSIC_DEAF/music_for_deaf_files/audios/%s.wav" %(path1, music) #Song file path
+	path = "/.%s/auris-core/auris-filter/src/main" %(path1) #Auris-Filter to play audio path.	
+	music_path = "%s/audios/%s.wav" %(path2, music) #Song file path
 	#Create Process to play music.
 	process = Popen([path, "1", music_path]) #System call sending "1" and music name as arguments.
 	return "Started!", 200 #In case of success, this message should be displayed in your Web Browser.
@@ -124,6 +127,36 @@ def stop():
 	print "Stop sent"
 	s.close #Close Socket.
 	return "Stopped!", 200 #In case of success, this message should be displayed in your Web Browser.
+
+'''
+# Method to verify if the uploaded file is supported by Auris Melody Generator.
+'''
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
+
+'''
+# Route to show upload form.
+'''
+@app.route('/upload')
+def index():
+    return app.send_static_file('index.html') #Show the default upload index.html page
+
+'''
+# This route handles uploaded files and check if the extension is supported.
+# In case of supported extension, it will save the uploaded archieve in AURIS_FILES/audios folder.
+'''
+@app.route('/upload_file', methods=['POST'])
+def upload():
+    file = request.files['file'] # Get the name of the uploaded file
+    filename = file.filename #Get filename
+    # Check if the file is one of the allowed types/extensions
+    if file and allowed_file(file.filename):
+        # Move the file form the temporal folder to the upload folder we setup
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # Redirect the user to the uploaded_file route, which will basicaly show on the browser the uploaded file
+        return "File Uploaded!", 200 #In case of success, this message should be displayed in your Web Browser.
+    return "File cannot be uploaded", 405
 
 #Python and Flask Configurations:
 if __name__ == "__main__":
