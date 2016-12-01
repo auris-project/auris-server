@@ -13,8 +13,9 @@ path2 = os.environ.get('AURIS_FILES') #Get Auris Files filepath
 
 #Flask HTML Configurations:
 app = Flask(__name__, static_url_path='', static_folder='html')
-app.config['UPLOAD_FOLDER'] = "%s/audios" %(path2) #path to save uploaded songs.
-app.config['ALLOWED_EXTENSIONS'] = set(['wav']) #Extensions supported by Auris Midi Melody Generator.
+app.config['UPLOAD_FOLDER_MUSIC'] = "%s/audios" %(path2) #path to save uploaded songs.
+app.config['UPLOAD_FOLDER_AURIS_FILES'] = "%s/auris_melodies" %(path2) #path to save uploaded songs.
+app.config['ALLOWED_EXTENSIONS'] = set(['wav', 'mp3', 'txt']) #Extensions supported by Auris Midi Melody Generator.
 
 #Server Socket Configurations:
 ip = '192.168.0.105' #IP to connect Arduino through Socket.
@@ -144,7 +145,8 @@ def index():
 
 '''
 # This route handles uploaded files and check if the extension is supported.
-# In case of supported extension, it will save the uploaded archieve in AURIS_FILES/audios folder.
+# In case of supported extension, for audios it will save the uploaded archive in AURIS_FILES/audios folder.
+# For text files, it will save the uploaded archive in AURIS_FILES/auris_melodies folder.
 '''
 @app.route('/upload_file', methods=['POST'])
 def upload():
@@ -152,8 +154,13 @@ def upload():
     filename = file.filename #Get filename
     # Check if the file is one of the allowed types/extensions
     if file and allowed_file(file.filename):
-        # Move the file form the temporal folder to the upload folder we setup
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # Move the file from the temporal folder to the upload folder setup earlier
+        # If is an audio, save in audios folder
+        if filename.find(".wav") > 0 or filename.find(".mp3") > 0:
+        	file.save(os.path.join(app.config['UPLOAD_FOLDER_MUSIC'], filename))
+        # If is text file, save in auris_melodies folder.
+        elif filename.find(".txt") > 0:
+        	file.save(os.path.join(app.config['UPLOAD_FOLDER_AURIS_FILES'], filename))
         # Redirect the user to the uploaded_file route, which will basicaly show on the browser the uploaded file
         return "File Uploaded!", 200 #In case of success, this message should be displayed in your Web Browser.
     return "File cannot be uploaded", 405
