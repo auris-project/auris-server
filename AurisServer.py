@@ -15,7 +15,7 @@ path2 = os.environ.get('AURIS_FILES') #Get Auris Files filepath
 #Flask HTML Configurations:
 app = Flask(__name__, static_url_path='', static_folder='front', template_folder="front/templates")
 app.config['UPLOAD_FOLDER_MUSIC'] = "%s/audios" %(path2) #path to save uploaded songs.
-app.config['UPLOAD_FOLDER_AURIS_FILES'] = "%s/auris_melodies" %(path2) #path to save uploaded songs.
+app.config['UPLOAD_FOLDER_AURIS_CFG'] = "%s/auris-core/auris-stream/file" %(path1) #path to save uploaded songs.
 app.config['ALLOWED_EXTENSIONS'] = set(['wav', 'mp3', 'txt']) #Extensions supported by Auris Midi Melody Generator.
 
 #Server Socket Configurations:
@@ -25,7 +25,7 @@ buffersize = 1024 #Buffer size to receive and send messages.
 message1 = "write" #Arduino Message 1: This message throws a flag to Arduino write Auris files sent through Socket into SD Card.
 message2 = "start" #Arduino Message 2: This message throws a flag to Arduino play Auris files.
 message3 = "stop"  #Arduino Message 3: This message throws a flag to Arduino stop execution of Auris files.
-ponto_de_parada = "*" #End of file. This message notify the end of file to Arduino stop write file into SD Card.
+ponto_de_parada = "#" #End of file. This message notify the end of file to Arduino stop write file into SD Card.
 
 @app.route('/')
 def index():
@@ -141,7 +141,7 @@ def start(ip, port, music):
 	#music_path = "%s/audios/%s.wav" %(path2, music) #Song file path
 	#Create Process to play music.
 	#process = Popen([path, "1", music_path]) #System call sending "1" and music name as arguments.
-	return Response(status=200) #In case of success, this message should be displayed in your Web Browser.
+	return Response(status=200) #In case of success this message should be displayed in your Web Browser.
 
 '''
 # Route to send Stop flag message to Arduino.
@@ -186,11 +186,11 @@ def upload():
         	file.save(os.path.join(app.config['UPLOAD_FOLDER_MUSIC'], filename))
         # If is text file, save in auris_melodies folder.
         elif filename.find(".txt") > 0:
-        	file.save(os.path.join(app.config['UPLOAD_FOLDER_AURIS_FILES'], filename))
+        	file.save(os.path.join(app.config['UPLOAD_FOLDER_AURIS_CFG'], filename))
         # Redirect the user to the uploaded_file route, which will basicaly show on the browser the uploaded file
         response=Response(status=200)
         return response
 
 #Python and Flask Configurations:
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5300, debug=True, threaded=True) #IP and Port use to send HTML Requests.
+	app.run(host="127.0.0.1", port=5500, debug=True, threaded=True) #IP and Port use to send HTML Requests.
