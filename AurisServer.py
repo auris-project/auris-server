@@ -173,7 +173,7 @@ def audio_generate(music, freq_corte, ganho):
 	freq_corte = int(freq_corte)
 	ganho = int(ganho)
 
-	path = "/.%s/auris-core/auris-filter/Auris_Essencia/Essencia_final" %(path1) #Auris-Filter to play audio path.
+	path = "/.%s/auris-core/auris-filter/Auris_Essentia/Essentia_final" %(path1) #Auris-Filter to play audio path.
 	music_path = "%s/audios/%s.wav" %(path2, music) #Song file path
 	filtered_path = "%s/audios_filtered/%s_filtered.wav" %(path2, music) #Song file path
 	process = Popen([path, "2", music_path, filtered_path, freq_corte, ganho]) #System call sending "1" and music name as arguments.
