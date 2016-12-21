@@ -68,10 +68,16 @@ def download_auris(music):
 	filename = "%s.txt" %(music) #Song name
 	return send_from_directory(directory=music_path, filename=filename, as_attachment=True)
 
+@app.route("/api/download-audio-filtered/<music>", methods=['GET'])
+def download_audio_filtered(music):
+	music_path = "%s/audios_filtered/" %(path2) #Song file path
+	filename = "%s_filtered.wav" %(music) #Song name
+	return send_from_directory(directory=music_path, filename=filename, as_attachment=True)
+
 @app.route("/api/play-music/<music>", methods=['GET'])
 def play_song(music):
-	music_path = "%s/audios/" %(path2) #Song file path
-	filename = "%s.wav" %(music) #Song name
+	music_path = "%s/audios_filtered/" %(path2) #Song file path
+	filename = "%s_filtered.wav" %(music) #Song name
 	return send_from_directory(directory=music_path, filename=filename)
 
 '''
@@ -162,6 +168,18 @@ def stop(ip, port):
 	s.close #Close Socket.
 	return Response(status=200) #In case of success, this message should be displayed in your Web Browser.
 
+@app.route("/api/audio-generate/<music>/<freq_corte>/<ganho>", methods=['GET'])
+def audio_generate(music, freq_corte, ganho):
+	freq_corte = int(freq_corte)
+	ganho = int(ganho)
+
+	path = "/.%s/auris-core/auris-filter/Auris_Essencia/Essencia_final" %(path1) #Auris-Filter to play audio path.
+	music_path = "%s/audios/%s.wav" %(path2, music) #Song file path
+	filtered_path = "%s/audios_filtered/%s_filtered.wav" %(path2, music) #Song file path
+	process = Popen([path, "2", music_path, filtered_path, freq_corte, ganho]) #System call sending "1" and music name as arguments.
+	process.wait
+	return Response(status=200)
+
 '''
 # Method to verify if the uploaded file is supported by Auris Melody Generator.
 '''
@@ -186,7 +204,7 @@ def upload():
         	file.save(os.path.join(app.config['UPLOAD_FOLDER_MUSIC'], filename))
         # If is text file, save in auris_melodies folder.
         elif filename.find(".txt") > 0:
-        	file.save(os.path.join(app.config['UPLOAD_FOLDER_AURIS_CFG'], filename))
+        	file.save(os.path.join(app.config['UPLOAD_FOLDER_AURIS_CFG'], "configure.txt"))
         # Redirect the user to the uploaded_file route, which will basicaly show on the browser the uploaded file
         response=Response(status=200)
         return response
