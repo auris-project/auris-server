@@ -170,8 +170,11 @@ def stop(ip, port):
 
 @app.route("/api/audio-generate/<music>/<freq_corte>/<ganho>", methods=['GET'])
 def audio_generate(music, freq_corte, ganho):
-	freq_corte = int(freq_corte)
-	ganho = int(ganho)
+	#freq_corte = int(freq_corte)
+	#ganho = int(ganho)
+
+	print freq_corte
+	print ganho
 
 	path = "/.%s/auris-core/auris-filter/Auris_Essentia/Essentia_final" %(path1) #Auris-Filter to play audio path.
 	music_path = "%s/audios/%s.wav" %(path2, music) #Song file path
