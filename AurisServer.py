@@ -80,6 +80,12 @@ def play_song(music):
 	filename = "%s_filtered.wav" %(music) #Song name
 	return send_from_directory(directory=music_path, filename=filename)
 
+@app.route("/api/play-video/<video>", methods=['GET'])
+def play_video(video):
+	video_path = "%s/videos/" %(path2) #Song file path
+	filename = "%s.mp4" %(video) #Song name
+	return send_from_directory(directory=video_path, filename=filename)
+
 '''
 # Route to send Auris Melodies files to Arduino.
 # The song name must be sent through URL in your Web Browser.
