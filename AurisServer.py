@@ -66,7 +66,7 @@ def generate_auris(music):
 def download_auris(music):
 	music_path = "%s/auris_melodies/" %(path2) #Song file path
 	filename = "%s.txt" %(music) #Song name
-	return send_from_directory(directory=music_path, filename=filename, as_attachment=True)
+	return send_from_directory(directory=music_path, filename=filename)
 
 @app.route("/api/download-audio-filtered/<music>", methods=['GET'])
 def download_audio_filtered(music):
@@ -112,19 +112,30 @@ def post_arduino(ip, port, music):
 	print "Starting Sending Files to Arduino..."
 	file_size = int(file_size) #Parse file_size from Str to Int.
 	buffer = work_file.read(file_size) #Read file and put in buffer.
-	s.send(message1) #Send flag to Arduino write what will be sent through socket.
-	data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
-	s.send(buffer) #Send file to Arduino.
-	s.send(ponto_de_parada) #Send end of file mark to Arduino.
-	print "Done Sending Files to Arduino."
-
-	data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
-	#At this pont Arduino MUST send an response to server to notify that transference was completed.
-	#If none message was received, the server will stop waiting for response.
-	while (data != "recebi"):
+	s.send("searc") #Send flag to Arduino write what will be sent through socket.
+	s.send(music)
+	s.send(ponto_de_parada)
+	data = s.recv(buffersize)
+	while data != "not":
 		data = s.recv(buffersize)
 
-	print "Message Received from Arduino: ", data #Print message received from Arduino
+	print(data)
+
+	if data == "not":
+		s.send(message1) #Send flag to Arduino write what will be sent through socket.
+		data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
+		s.send(buffer) #Send file to Arduino.
+		s.send(ponto_de_parada) #Send end of file mark to Arduino.
+		print "Done Sending Files to Arduino."
+
+		data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
+		#At this pont Arduino MUST send an response to server to notify that transference was completed.
+		#If none message was received, the server will stop waiting for response.
+		while (data != "recebi"):
+			data = s.recv(buffersize)
+
+		print "Message Received from Arduino: ", data #Print message received from Arduino
+
 	s.close #Close Socket
 	return Response(status=200) #This message should be displayed in your Web Browser.
 
@@ -220,4 +231,4 @@ def upload():
 
 #Python and Flask Configurations:
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5500, debug=True, threaded=True) #IP and Port use to send HTML Requests.
+	app.run(host="127.0.0.1", port=5503, debug=True, threaded=True) #IP and Port use to send HTML Requests.
