@@ -109,21 +109,25 @@ def post_arduino(ip, port, music):
 	print "Connection Succeed"
 	
 	#Start Sending Files:
-	print "Starting Sending Files to Arduino..."
-	file_size = int(file_size) #Parse file_size from Str to Int.
-	buffer = work_file.read(file_size) #Read file and put in buffer.
 	s.send("searc") #Send flag to Arduino write what will be sent through socket.
 	s.send(music)
 	s.send(ponto_de_parada)
+
 	data = s.recv(buffersize)
-	while data != "not":
-		data = s.recv(buffersize)
+	while True:
+		if data == "not":
+			break
+		if data == "yes":
+			break 
 
 	print(data)
 
 	if data == "not":
-		s.send(message1) #Send flag to Arduino write what will be sent through socket.
-		data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
+		#s.send(message1) #Send flag to Arduino write what will be sent through socket.
+		#data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
+		print "Starting Sending Files to Arduino..."
+		file_size = int(file_size) #Parse file_size from Str to Int.
+		buffer = work_file.read(file_size) #Read file and put in buffer.
 		s.send(buffer) #Send file to Arduino.
 		s.send(ponto_de_parada) #Send end of file mark to Arduino.
 		print "Done Sending Files to Arduino."
@@ -146,13 +150,12 @@ def post_arduino(ip, port, music):
 # Example: http://Your_IP:Port/api/start/SONG_NAME.
 # If you have installed all dependencies using our script installer, the song will be played in your computer using PUREDATA.
 '''
-@app.route("/api/start/<ip>/<port>/<music>", methods=['GET'])
-def start(ip, port, music):
+@app.route("/api/start/<ip>/<port>", methods=['GET'])
+def start(ip, port):
 	port = int(port)
 
 	print "Connecting ip: ", ip
 	print "At port: ", port
-	print "Music: ", music
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Create Socket to send message.
 	s.connect((ip, port)) #Connect in Arduino Socket Server.
@@ -231,4 +234,4 @@ def upload():
 
 #Python and Flask Configurations:
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5503, debug=True, threaded=True) #IP and Port use to send HTML Requests.
+	app.run(host="127.0.0.1", port=5501, debug=True, threaded=True) #IP and Port use to send HTML Requests.
