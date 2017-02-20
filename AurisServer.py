@@ -13,7 +13,8 @@ path1 = os.environ.get('AURIS_HOME_PATH') #Get Auris Home filepath.
 path2 = os.environ.get('AURIS_FILES') #Get Auris Files filepath
 
 #Flask HTML Configurations:
-app = Flask(__name__, static_url_path='', static_folder='auris-front', template_folder="front/templates")
+app = Flask(__name__, static_url_path='', static_folder='auris-front', template_folder="auris-front/templates")
+
 app.config['UPLOAD_FOLDER_MUSIC'] = "%s/audios" %(path2) #path to save uploaded songs.
 app.config['UPLOAD_FOLDER_AURIS_CFG'] = "%s/auris-core/auris-stream/file" %(path1) #path to save uploaded songs.
 app.config['ALLOWED_EXTENSIONS'] = set(['wav', 'mp3', 'txt']) #Extensions supported by Auris Midi Melody Generator.
@@ -66,7 +67,7 @@ def generate_auris(music):
 def download_auris(music):
 	music_path = "%s/auris_melodies/" %(path2) #Song file path
 	filename = "%s.txt" %(music) #Song name
-	return send_from_directory(directory=music_path, filename=filename, as_attachment=True)
+	return send_from_directory(directory=music_path, filename=filename)
 
 @app.route("/api/download-audio-filtered/<music>", methods=['GET'])
 def download_audio_filtered(music):
@@ -79,6 +80,12 @@ def play_song(music):
 	music_path = "%s/audios_filtered/" %(path2) #Song file path
 	filename = "%s_filtered.wav" %(music) #Song name
 	return send_from_directory(directory=music_path, filename=filename)
+
+@app.route("/api/play-video/<video>", methods=['GET'])
+def play_video(video):
+	video_path = "%s/videos/" %(path2) #Song file path
+	filename = "%s.mp4" %(video) #Song name
+	return send_from_directory(directory=video_path, filename=filename)
 
 '''
 # Route to send Auris Melodies files to Arduino.
@@ -103,22 +110,37 @@ def post_arduino(ip, port, music):
 	print "Connection Succeed"
 	
 	#Start Sending Files:
-	print "Starting Sending Files to Arduino..."
-	file_size = int(file_size) #Parse file_size from Str to Int.
-	buffer = work_file.read(file_size) #Read file and put in buffer.
-	s.send(message1) #Send flag to Arduino write what will be sent through socket.
-	data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
-	s.send(buffer) #Send file to Arduino.
-	s.send(ponto_de_parada) #Send end of file mark to Arduino.
-	print "Done Sending Files to Arduino."
+	s.send("searc") #Send flag to Arduino write what will be sent through socket.
+	s.send(music)
+	s.send(ponto_de_parada)
 
-	data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
-	#At this pont Arduino MUST send an response to server to notify that transference was completed.
-	#If none message was received, the server will stop waiting for response.
-	while (data != "recebi"):
-		data = s.recv(buffersize)
+	data = s.recv(buffersize)
+	while True:
+		if data == "not":
+			break
+		if data == "yes":
+			break 
 
-	print "Message Received from Arduino: ", data #Print message received from Arduino
+	print(data)
+
+	if data == "not":
+		#s.send(message1) #Send flag to Arduino write what will be sent through socket.
+		#data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
+		print "Starting Sending Files to Arduino..."
+		file_size = int(file_size) #Parse file_size from Str to Int.
+		buffer = work_file.read(file_size) #Read file and put in buffer.
+		s.send(buffer) #Send file to Arduino.
+		s.send(ponto_de_parada) #Send end of file mark to Arduino.
+		print "Done Sending Files to Arduino."
+
+		data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
+		#At this pont Arduino MUST send an response to server to notify that transference was completed.
+		#If none message was received, the server will stop waiting for response.
+		while (data != "recebi"):
+			data = s.recv(buffersize)
+
+		print "Message Received from Arduino: ", data #Print message received from Arduino
+
 	s.close #Close Socket
 	return Response(status=200) #This message should be displayed in your Web Browser.
 
@@ -129,13 +151,12 @@ def post_arduino(ip, port, music):
 # Example: http://Your_IP:Port/api/start/SONG_NAME.
 # If you have installed all dependencies using our script installer, the song will be played in your computer using PUREDATA.
 '''
-@app.route("/api/start/<ip>/<port>/<music>", methods=['GET'])
-def start(ip, port, music):
+@app.route("/api/start/<ip>/<port>", methods=['GET'])
+def start(ip, port):
 	port = int(port)
 
 	print "Connecting ip: ", ip
 	print "At port: ", port
-	print "Music: ", music
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Create Socket to send message.
 	s.connect((ip, port)) #Connect in Arduino Socket Server.
@@ -214,4 +235,4 @@ def upload():
 
 #Python and Flask Configurations:
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5500, debug=True, threaded=True) #IP and Port use to send HTML Requests.
+	app.run(host="127.0.0.1", port=5501, debug=True, threaded=True) #IP and Port use to send HTML Requests.
