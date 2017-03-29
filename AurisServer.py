@@ -14,7 +14,6 @@ path2 = os.environ.get('AURIS_FILES') #Get Auris Files filepath
 
 #Flask HTML Configurations:
 app = Flask(__name__, static_url_path='', static_folder='auris-front', template_folder="auris-front/templates")
-
 app.config['UPLOAD_FOLDER_MUSIC'] = "%s/audios" %(path2) #path to save uploaded songs.
 app.config['UPLOAD_FOLDER_AURIS_CFG'] = "%s/auris-core/auris-stream/file" %(path1) #path to save uploaded songs.
 app.config['ALLOWED_EXTENSIONS'] = set(['wav', 'mp3', 'txt']) #Extensions supported by Auris Midi Melody Generator.
