@@ -14,7 +14,6 @@ path2 = os.environ.get('AURIS_FILES') #Get Auris Files filepath
 
 #Flask HTML Configurations:
 app = Flask(__name__, static_url_path='', static_folder='auris-front', template_folder="auris-front/templates")
-
 app.config['UPLOAD_FOLDER_MUSIC'] = "%s/audios" %(path2) #path to save uploaded songs.
 app.config['UPLOAD_FOLDER_AURIS_CFG'] = "%s/auris-core/auris-stream/file" %(path1) #path to save uploaded songs.
 app.config['ALLOWED_EXTENSIONS'] = set(['wav', 'mp3', 'txt']) #Extensions supported by Auris Midi Melody Generator.
@@ -111,35 +110,54 @@ def post_arduino(ip, port, music):
 	
 	#Start Sending Files:
 	s.send("searc") #Send flag to Arduino write what will be sent through socket.
-	s.send(music)
-	s.send(ponto_de_parada)
 
 	data = s.recv(buffersize)
 	while True:
-		if data == "not":
+		if data == "200":
 			break
-		if data == "yes":
+		if data == "501":
 			break 
+
+	if data == "200":
+		s.send(music)
+		s.send(ponto_de_parada)
+
+	data = s.recv(buffersize)
+	while True:
+		if data == "404":
+			break
+		if data == "200":
+			break
 
 	print(data)
 
-	if data == "not":
-		#s.send(message1) #Send flag to Arduino write what will be sent through socket.
-		#data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
-		print "Starting Sending Files to Arduino..."
-		file_size = int(file_size) #Parse file_size from Str to Int.
-		buffer = work_file.read(file_size) #Read file and put in buffer.
-		s.send(buffer) #Send file to Arduino.
-		s.send(ponto_de_parada) #Send end of file mark to Arduino.
-		print "Done Sending Files to Arduino."
+	if data == "404":
 
-		data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
-		#At this pont Arduino MUST send an response to server to notify that transference was completed.
-		#If none message was received, the server will stop waiting for response.
-		while (data != "recebi"):
-			data = s.recv(buffersize)
+		data = s.recv(buffersize)
+		while True:
+			if data == "412":
+				break
+			if data == "201":
+				break
 
-		print "Message Received from Arduino: ", data #Print message received from Arduino
+		if data == "201":
+			#s.send(message1) #Send flag to Arduino write what will be sent through socket.
+			#data = s.recv(buffersize) #Wait Arduino start writting into SD Card.
+			print "Starting Sending Files to Arduino..."
+			file_size = int(file_size) #Parse file_size from Str to Int.
+			buffer = work_file.read(file_size) #Read file and put in buffer.
+			s.send(buffer) #Send file to Arduino.
+			s.send(ponto_de_parada) #Send end of file mark to Arduino.
+
+			print "Done Sending Files to Arduino."
+
+			data = s.recv(buffersize) #Wait Arduino finish writting into SD Card.
+			#At this pont Arduino MUST send an response to server to notify that transference was completed.
+			#If none message was received, the server will stop waiting for response.
+			while True:
+				if data == "200":
+					print "Message Received from Arduino: ", data #Print message received from Arduino
+					break
 
 	s.close #Close Socket
 	return Response(status=200) #This message should be displayed in your Web Browser.
@@ -163,6 +181,19 @@ def start(ip, port):
 	print "Sending Start to Arduino"
 	s.send(message2) #Send Start Message Flag to Arduino.
 	print "Start Sent"
+
+	data = s.recv(buffersize)
+	while True:
+		if data == "404":
+			print "File not Found: ", data
+			break
+		if data == "200":
+			print "Starting music: ", data
+			break
+		if data == "501":
+			print "Command not found: ", data
+			break
+
 	s.close #Close Socket.
 	#path = "/.%s/auris-core/auris-filter/src/main" %(path1) #Auris-Filter to play audio path.	
 	#music_path = "%s/audios/%s.wav" %(path2, music) #Song file path
@@ -186,7 +217,17 @@ def stop(ip, port):
 	print "Sending Stop to Arduino"
 	s.send(message3) #Send Start Message Flag to Arduino.
 	print "Stop sent"
-	s.close #Close Socket.
+
+	data = s.recv(buffersize)
+	while True:
+		if data == "200":
+			print "Stoping music: ", data
+			s.close #Close Socket.
+			break
+		if data == "501":
+			print "Command not found: ", data
+			break
+			
 	return Response(status=200) #In case of success, this message should be displayed in your Web Browser.
 
 @app.route("/api/audio-generate/<music>/<freq_corte>/<ganho>", methods=['GET'])
@@ -235,4 +276,4 @@ def upload():
 
 #Python and Flask Configurations:
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5501, debug=True, threaded=True) #IP and Port use to send HTML Requests.
+	app.run(host="0.0.0.0", port=5502, debug=True, threaded=True) #IP and Port use to send HTML Requests.
